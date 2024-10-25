@@ -12,10 +12,9 @@ use Illuminate\Http\Request;
 class Helper
 {
     public static function arrRegister(Request $request)
-    {
-        $users = $request->all();
+    {        
         $createdUsers = [];
-        foreach ($users as $userData) {
+        foreach ($request->bulk as $userData) {
             $validator = Validator::make($userData, [
                 'name' => 'required|string',
                 'cedula' => 'required|numeric',

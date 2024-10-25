@@ -8,10 +8,10 @@ use Illuminate\Support\Facades\Route;
 Route::post('/registerAdmin', [AuthController::class, 'registerAdmin']);
 Route::post('/loginAdmin', [AuthController::class, 'loginAdmin']);
 Route::get('/debug', [AuthController::class, 'whoIsLoged']);
+Route::post('/login', [AuthController::class, 'login']);
 
 Route::middleware('auth:api')->group(function(){    
     Route::post('/register', [AuthController::class, 'register']);
-    Route::post('/login', [AuthController::class, 'login']);
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::post('/validarToken', [AuthController::class, 'validarToken']);
 });

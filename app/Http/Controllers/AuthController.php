@@ -17,58 +17,51 @@ class AuthController extends Controller
     public function register(Request $request)
     {
         $user = JWTAuth::parseToken()->authenticate();
-        if ($user->rol != 'admin') {            
+        if ($user->rol != 'admin') {
             return response()->json(['message' => 'no autorizado'], 401);
-        }                
-        if (is_array($request->all())) {
-            $elementCount = count($request->all());
+        }        
+        if (!$request->has('bulk')) {
+            $validator = Validator::make($request->all(), [
+                'name' => 'required|string',
+                'cedula' => 'required|numeric',
+                'celular' => 'nullable|numeric',
+                'email' => 'required|string|email|unique:users',
+                'password' => 'required|string|min:6',
+                'rol' => 'required|string'
+            ]);
 
-            if ($elementCount === 6) { 
-                $validator = Validator::make($request->all(), [
-                    'name' => 'required|string',
-                    'cedula' => 'required|numeric',
-                    'celular' => 'nullable|numeric',
-                    'email' => 'required|string|email|unique:users',
-                    'password' => 'required|string|min:6',
-                    'rol' => 'required|string'
-                ]);
-        
-                if ($validator->fails()) {
-                    return response()->json([
-                        'message' => 'error en la validacion',
-                        'errors' => $validator->errors(),
-                    ], 400);
-                }
-                if ($request->rol != 'alumno' and $request->rol != 'profesor') {
-                    return response()->json(['message' => 'los roles solo puede ser `alumno` o `profesor`']);
-                }
-                $user = User::create([
-                    'name' => $request->name,
-                    'cedula' => $request->cedula,
-                    'celular' => $request->celular ?? 0,
-                    'email' => $request->email,
-                    'password' => $request->password,
-                    'rol' => $request->rol,
-                ]);
-                if ($user->rol == 'profesor') {
-                    $profesor = Profesor::create(['user_id' => $user->id]);
-                }
-                if ($user->rol == 'alumno') {
-                    $alumno = Alumno::create(['user_id' => $user->id]);
-                }
-        
+            if ($validator->fails()) {
                 return response()->json([
-                    'message' => 'usuario creado',
-                    'user' => $user,
-                    'rol' => $user->rol,
-                ], 201);
-            } else {
-                return Helper::arrRegister($request);
+                    'message' => 'error en la validacion',
+                    'errors' => $validator->errors(),
+                ], 400);
             }
+            if ($request->rol != 'alumno' and $request->rol != 'profesor') {
+                return response()->json(['message' => 'los roles solo puede ser `alumno` o `profesor`']);
+            }
+            $user = User::create([
+                'name' => $request->name,
+                'cedula' => $request->cedula,
+                'celular' => $request->celular ?? 0,
+                'email' => $request->email,
+                'password' => $request->password,
+                'rol' => $request->rol,
+            ]);
+            if ($user->rol == 'profesor') {
+                $profesor = Profesor::create(['user_id' => $user->id]);
+            }
+            if ($user->rol == 'alumno') {
+                $alumno = Alumno::create(['user_id' => $user->id]);
+            }
+
+            return response()->json([
+                'message' => 'usuario creado',
+                'user' => $user,
+                'rol' => $user->rol,
+            ], 201);
+        } else {
+            return Helper::arrRegister($request);
         }
-        return response()->json([
-            'message' => 'los datos se cargaron mal'
-        ]);        
     }
 
     public function login(Request $request)
@@ -117,8 +110,8 @@ class AuthController extends Controller
 
     public function validarToken(Request $request)
     {
-        try {                        
-            $user = JWTAuth::parseToken()->authenticate();            
+        try {
+            $user = JWTAuth::parseToken()->authenticate();
             return response()->json($user);
         } catch (\Exception $e) {
             return response()->json(['message' => 'token invalido, error en la validacion'], 401);
